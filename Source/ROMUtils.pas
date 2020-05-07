@@ -16,7 +16,7 @@ unit ROMUtils;
 
 interface
 
-Uses Windows, Controls, Classes, SysUtils, Clipbrd, Math, Messages;
+Uses Windows, Dialogs,Controls, Classes, SysUtils, Clipbrd, Math, Messages;
 
 Type
 
@@ -139,9 +139,9 @@ Var
    ('7', 'RETURN without GO SUB', 'There has been one more RETURN than there were GO SUBs.', 'RETURN'),
    ('8', 'Fatal unknown error message', 'The interpreter has come across a statement or expression which it cannot handle. The program flow will be terminated.', 'Any expression or statement.'),
    ('9', 'STOP statement', 'After this, CONTINUE will not repeat the STOP, but will carry on with the statement after.', 'STOP'),
-   ('A', 'Invalid Argument', 'The argument for a function is unsuitable (for some reason).', 'SQR, LN, ASC, ACS, USR (with AnsiString argument)'),
+   ('A', 'Invalid Argument', 'The argument for a function is unsuitable (for some reason).', 'SQR, LN, ASC, ACS, USR (with String argument)'),
    ('B', 'Integer out of range', 'When an integer is required, the floating point argument is rounded to the nearest integer. If this is outside a suitable range, then this error results. For Array Access, also see Error 3.', 'RUN, RANDOMIZE, POKE, DIM, GO TO, GO SUB, LIST, LLIST, PAUSE, PLOT, CHR$, PEEK, USR (with numeric argument)'),
-   ('C', 'Nonsense in BASIC', 'The text of the (AnsiString) argument does not form a valid expression. Also used when the argument for a function or command is outrageously wrong.', 'VAL, VAL$'),
+   ('C', 'Nonsense in BASIC', 'The text of the (string) argument does not form a valid expression. Also used when the argument for a function or command is outrageously wrong.', 'VAL, VAL$'),
    ('D', 'BREAK - CONTINUE repeats', 'BREAK was pressed during some peripheral operation. The behaviour of CONTINUE after this report is normal in that it repeats the statement. Compare with report L.', 'LOAD, SAVE, VERIFY, MERGE. Also when the computer asks "Scroll?" and you press N, BREAK or the space bar.'),
    ('E', 'Out of DATA', 'You have tried to READ past the end of the DATA list.', 'READ'),
    ('F', 'Invalid Filename', 'SAVE with a filename not descriptive of a file on your hard drive.', 'SAVE'),
@@ -155,7 +155,7 @@ Var
    ('N', 'Statement lost', 'Jump to a statement that no longer exists.', 'RETURN, NEXT, CONTINUE'),
    ('O', 'Invalid stream', 'Trying to input from (or output to) a stream that isn`t open or that is out of range (0 to 15); or trying to open a stream that is out of range.', 'INPUT #, OPEN #, PRINT #'),
    ('P', 'FN without DEF FN', 'User-defined function used without a corresponding DEF FN in the program.', 'FN'),
-   ('Q', 'Parameter error', 'Wrong number of arguments, or one of them is the wrong type (AnsiString instead of a number, or vice-versa).', 'Any function.'),
+   ('Q', 'Parameter error', 'Wrong number of arguments, or one of them is the wrong type (String instead of a number, or vice-versa).', 'Any function.'),
    ('R', 'File loading error', 'A file was found on disk, but could not be loaded for some reason, or would not verify.', 'VERIFY, LOAD, MERGE'),
    ('a', 'MERGE error', 'MERGE ! would not execute for some reason - either size or filetype is wrong.', 'MERGE !'),
    ('b', 'Wrong file type', 'A file of inappropriate type was specified during RAM disk operation, for instance a CODE file in LOAD !"name".', 'MERGE !, LOAD !'),
@@ -347,7 +347,7 @@ Const
      (sType: 0; Desc:'DEF-FN-4'; Address: $1F89), (sType: 0; Desc:'DEF-FN-5'; Address: $1F94), (sType: 0; Desc:'DEF-FN-6'; Address: $1FA6), (sType: 0; Desc:'DEF-FN-7'; Address: $1FBD), (sType: 0; Desc:'UNSTACK-Z'; Address: $1FC3),
      (sType: 0; Desc:'LPRINT'; Address: $1FC9), (sType: 0; Desc:'PRINT'; Address: $1FCD), (sType: 0; Desc:'PRINT-1'; Address: $1FCF), (sType: 0; Desc:'PRINT-2'; Address: $1FDF), (sType: 0; Desc:'PRINT-3'; Address: $1FE5),
      (sType: 0; Desc:'PRINT-4'; Address: $1FF2), (sType: 0; Desc:'PRINT-CR'; Address: $1FF5), (sType: 0; Desc:'PR-ITEM-1'; Address: $1FFC), (sType: 0; Desc:'PR-ITEM-2'; Address: $200E), (sType: 0; Desc:'PR-AT-TAB'; Address: $201E),
-     (sType: 0; Desc:'PR-ITEM-3'; Address: $2024), (sType: 0; Desc:'PR-AnsiString'; Address: $203C), (sType: 0; Desc:'PR-END-Z'; Address: $2045), (sType: 0; Desc:'PR-ST-END'; Address: $2048), (sType: 0; Desc:'PR-POSN-1'; Address: $204E),
+     (sType: 0; Desc:'PR-ITEM-3'; Address: $2024), (sType: 0; Desc:'PR-STRING'; Address: $203C), (sType: 0; Desc:'PR-END-Z'; Address: $2045), (sType: 0; Desc:'PR-ST-END'; Address: $2048), (sType: 0; Desc:'PR-POSN-1'; Address: $204E),
      (sType: 0; Desc:'PR-POSN-2'; Address: $2061), (sType: 0; Desc:'PR-POSN-3'; Address: $2067), (sType: 0; Desc:'PR-POSN-4'; Address: $206E), (sType: 0; Desc:'STR-ALTER'; Address: $2070), (sType: 0; Desc:'INPUT'; Address: $2089),
      (sType: 0; Desc:'INPUT-1'; Address: $2096), (sType: 0; Desc:'INPUT-2'; Address: $20AD), (sType: 0; Desc:'IN-ITEM-1'; Address: $20C1), (sType: 0; Desc:'IN-ITEM-2'; Address: $20D8), (sType: 0; Desc:'IN-ITEM-3'; Address: $20ED),
      (sType: 0; Desc:'IN-PROMPT'; Address: $20FA), (sType: 0; Desc:'IN-PR-1'; Address: $211A), (sType: 0; Desc:'IN-PR-2'; Address: $211C), (sType: 0; Desc:'IN-PR-3'; Address: $2129), (sType: 0; Desc:'IN-VAR-1'; Address: $213A),
@@ -367,7 +367,7 @@ Const
      (sType: 0; Desc:'SCANNING'; Address: $24FB), (sType: 0; Desc:'S-LOOP-1'; Address: $24FF), (sType: 0; Desc:'S-QUOTE-S'; Address: $250F), (sType: 0; Desc:'S-2-COORD'; Address: $2522), (sType: 0; Desc:'S-RPORT-C'; Address: $252D),
      (sType: 0; Desc:'SYNTAX-Z'; Address: $2530), (sType: 0; Desc:'S-SCRN$-S'; Address: $2535), (sType: 0; Desc:'S-SCRN-LP'; Address: $254F), (sType: 0; Desc:'S-SC-MTCH'; Address: $255A), (sType: 0; Desc:'S-SC-ROWS'; Address: $255D),
      (sType: 0; Desc:'S-SCR-NXT'; Address: $2573), (sType: 0; Desc:'S-SCR-STO'; Address: $257D), (sType: 0; Desc:'S-ATTR-S'; Address: $2580), (sType: 0; Desc:'scan-func'; Address: $2596), (sType: 0; Desc:'S-U-PLUS'; Address: $25AF),
-     (sType: 0; Desc:'S-QUOTE'; Address: $25B3), (sType: 0; Desc:'S-Q-AGAIN'; Address: $25BE), (sType: 0; Desc:'S-Q-COPY'; Address: $25CB), (sType: 0; Desc:'S-Q-PRMS'; Address: $25D9), (sType: 0; Desc:'S-AnsiString'; Address: $25DB),
+     (sType: 0; Desc:'S-QUOTE'; Address: $25B3), (sType: 0; Desc:'S-Q-AGAIN'; Address: $25BE), (sType: 0; Desc:'S-Q-COPY'; Address: $25CB), (sType: 0; Desc:'S-Q-PRMS'; Address: $25D9), (sType: 0; Desc:'S-STRING'; Address: $25DB),
      (sType: 0; Desc:'S-BRACKET'; Address: $25E8), (sType: 0; Desc:'S-FN'; Address: $25F5), (sType: 0; Desc:'S-RND'; Address: $25F8), (sType: 0; Desc:'S-RND-END'; Address: $2625), (sType: 0; Desc:'S-PI'; Address: $2627),
      (sType: 0; Desc:'S-PI-END'; Address: $2630), (sType: 0; Desc:'S-INKEY$'; Address: $2634), (sType: 0; Desc:'S-IK$-STK'; Address: $2660), (sType: 0; Desc:'S-INK$-EN'; Address: $2665), (sType: 0; Desc:'S-SCREEN$'; Address: $2668),
      (sType: 0; Desc:'S-ATTR'; Address: $2672), (sType: 0; Desc:'S-POINT'; Address: $267B), (sType: 0; Desc:'S-ALPHNUM'; Address: $2684), (sType: 0; Desc:'S-DECIMAL'; Address: $268D), (sType: 0; Desc:'S-STK-DEC'; Address: $26B5),
@@ -393,7 +393,7 @@ Const
      (sType: 0; Desc:'LET'; Address: $2AFF), (sType: 0; Desc:'L-EACH-CH'; Address: $2B0B), (sType: 0; Desc:'L-NO-SP'; Address: $2B0C), (sType: 0; Desc:'L-TEST-CH'; Address: $2B1F), (sType: 0; Desc:'L-SPACES'; Address: $2B29),
      (sType: 0; Desc:'L-AnsiChar'; Address: $2B3E), (sType: 0; Desc:'L-SINGLE'; Address: $2B4F), (sType: 0; Desc:'L-NUMERIC'; Address: $2B59), (sType: 0; Desc:'L-EXISTS'; Address: $2B66), (sType: 0; Desc:'L-DELETE$'; Address: $2B72),
      (sType: 0; Desc:'L-LENGTH'; Address: $2B9B), (sType: 0; Desc:'L-IN-W/S'; Address: $2BA3), (sType: 0; Desc:'L-ENTER'; Address: $2BA6), (sType: 0; Desc:'L-ADD$'; Address: $2BAF), (sType: 0; Desc:'L-NEW$'; Address: $2BC0),
-     (sType: 0; Desc:'L-AnsiString'; Address: $2BC6), (sType: 0; Desc:'L-FIRST'; Address: $2BEA), (sType: 0; Desc:'STK-FETCH'; Address: $2BF1), (sType: 0; Desc:'DIM'; Address: $2C02), (sType: 0; Desc:'D-RPORT-C'; Address: $2C05),
+     (sType: 0; Desc:'L-STRING'; Address: $2BC6), (sType: 0; Desc:'L-FIRST'; Address: $2BEA), (sType: 0; Desc:'STK-FETCH'; Address: $2BF1), (sType: 0; Desc:'DIM'; Address: $2C02), (sType: 0; Desc:'D-RPORT-C'; Address: $2C05),
      (sType: 0; Desc:'D-RUN'; Address: $2C15), (sType: 0; Desc:'D-LETTER'; Address: $2C1F), (sType: 0; Desc:'D-SIZE'; Address: $2C2D), (sType: 0; Desc:'D-NO-LOOP'; Address: $2C2E), (sType: 0; Desc:'DIM-CLEAR'; Address: $2C7C),
      (sType: 0; Desc:'DIM-SIZES'; Address: $2C7F), (sType: 0; Desc:'ALPHANUM'; Address: $2C88), (sType: 0; Desc:'ALPHA'; Address: $2C8D), (sType: 0; Desc:'DEC-TO-FP'; Address: $2C9B), (sType: 0; Desc:'BIN-DIGIT'; Address: $2CA2),
      (sType: 0; Desc:'BIN-END'; Address: $2CB3), (sType: 0; Desc:'NOT-BIN'; Address: $2CB8), (sType: 0; Desc:'DECIMAL'; Address: $2CCB), (sType: 0; Desc:'DEC-RPT-C'; Address: $2CCF), (sType: 0; Desc:'DEC-STO-1'; Address: $2CD5),
@@ -931,7 +931,10 @@ Begin
                  // Loaded a program? If so, add its' name to the MRU list.
                  If MemAtIX = 0 Then Begin
                     BASinOutput.UpdateCursorPos(1, False);
-                    BASinOutput.AddToMRUList(Filename);
+                    if (trim(Copy(ExtractFilename(Filename),1,8))<>'autoback') Then Begin
+                        BASinOutput.AddToMRUList(Filename);
+
+                    End;
                     FASTMode := False;
                  End;
               End Else Begin
@@ -985,8 +988,16 @@ Begin
 
                  if Filename<>'' Then Begin       //Set title for TAP files //arda
                         SetProjectName(Filename);
+                        If (paramstr(2)='-dumptxt') Then Begin   //add commandline option for dump TXT file  arda
+                                SaveBAS(False, False);
+                                SetLength(FileArray, Length(FileBody));
+                                CopyMemory(@FileArray[0], @FileBody[1], Length(FileBody));
+                                If Lowercase(ExtractFileExt(Filename)) <> '.txt' Then Filename := Filename + '_BASIC.txt';
+                                If SaveFile Then Begin
+                                        DumpDoneQuit:=true;
+                                End;
+                        End;
                         //SetProjectName(ExtractFilename(Filename));
-                        
                  end else begin
                         SetProjectName(trim(Copy(FileHeader,1,10)));
                  end;                             //end arda
@@ -2409,6 +2420,7 @@ Begin
 
 End;
 
+
 Procedure CheckFor128kCommands;
 Var
   InString, REMCommand: Boolean;
@@ -2434,6 +2446,9 @@ Begin
         InString := False;
         Inc(Addr, 5);
      End Else
+        If Memory[Addr] = 37 Then
+                       Spectranet := True; //A Spectranet program -by arda-!
+
         If Memory[Addr] = 14 Then Begin
            If Not (REMCommand or InString) Then
               Inc(Addr, 6)
@@ -2450,8 +2465,10 @@ Begin
                     While Memory[Idx] < 33 Do
                        Inc(Idx);
                     If Memory[Idx] = 33 Then
-                       ProgramIs128k := True;
+                       ProgramIs128k := True;   // ! is used
                  End;
+
+
            End Else
               If Not REMCommand then
                  If Memory[Addr] in [163, 164] Then // UDGs T/U - not 128k compatible
@@ -2667,7 +2684,7 @@ Begin
 				   Inc(Index);
 				   CurChar := Line[Index];
 			   End;
-
+               Result := Result;
            // So, for now - I'll add in the original behaviour here, so the fix above can be reversed. The fix is
            // also quite a lot slower on tokenisation, but that should be ok as it's only called when entering a line.
 
@@ -2760,12 +2777,13 @@ Begin
                     Goto VarName;
                   End;
            End;
-				// Now test - Does the token have a leading space?
-				If F > 31 Then Begin
-					// Leading Space, Remove the space.
+
+	   // Now test - Does the token have a leading space?
+           If F > 31 Then Begin
+              // Leading Space, Remove the space.
               If Result <> '' Then
-					   If Result[Length(Result)] = ' ' Then
-						   Result := Copy(Result, 1, Length(Result) -1);
+		  If Result[Length(Result)] = ' ' Then
+			Result := Copy(Result, 1, Length(Result) -1);
               If F = 43 Then
                  DEFFNPresent := True;
               If F = 71 Then Begin
@@ -3894,8 +3912,15 @@ Var
   F: Integer;
 Begin
   Filename := FName;
+  If Lowercase(ExtractFileExt(Filename)) = '.bas' Then Begin
+        if (trim(Copy(ExtractFilename(Filename),1,8))='autoback') Then Begin
+                MessageDlg('This is a automatic backup file.'+#13+#13+'You should save this file as different filename to keep it.'+#13+#13+'Autosave feature will not work if your project is named as Autoback.', mtWarning, [mbOk], 0);
+
+        End;
+  End;
+
   SaveEmulationState(TempState);
-  RLEUnpackFile(BASinDir+'\BASin.bin', 'LOAD.sna');
+  RLEUnpackFile(BASinDir+'\basinC.bin', 'LOAD.sna');
   SetLength(FileArray, Length(RLEArray));
   For F := 0 to Length(RLEArray)-1 do
      FileArray[F] := RLEArray[F];

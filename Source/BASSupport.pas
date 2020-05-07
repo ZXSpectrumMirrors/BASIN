@@ -1785,7 +1785,8 @@ Begin
      // Call SaveFile with the real filename. This will save FileBody.
      If Lowercase(ExtractFileExt(Filename)) <> '.bas' Then Filename := Filename + '.bas';
      If SaveFile then
-         SetProjectName(Filename);
+        if (trim(Copy(ExtractFilename(Filename),1,8))<>'autoback') Then
+            SetProjectName(Filename);
         //SetProjectName(ExtractFilename(Filename));
 
   End;
@@ -1830,7 +1831,7 @@ Begin
   Text := Text + #$FF;
   While LinePos < LineLen Do Begin
      If Text[LinePos] in [#65..#90, #97..#122] Then
-        While Text[LinePos] in [#32, #36, #48..#56, #65..#90, #97..#122] Do Begin
+        While Text[LinePos] in [#32, #36, #48..#57, #65..#90, #97..#122] Do Begin     //let a91=100 ardafix! typo 48..56 :)
            Result := Result + Text[LinePos];
            Inc(LinePos);
            If LinePos >= LineLen Then

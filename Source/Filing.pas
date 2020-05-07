@@ -40,6 +40,7 @@ Type
 
 Var
 
+  DumpDoneQuit:     Boolean;
   FileName,
   FileHeader,
   FileBody:         AnsiString;
@@ -155,13 +156,13 @@ Var
 Begin
 	Text := TimeToStr(Now) + ' ' + Text + #13#10;
   If BASinDIR = '' Then GetBASinDIR;
-	If Not FileExists(BASinDir+'\BASin.log') Then Begin
+	If Not FileExists(BASinDir+'\basinC.log') Then Begin
      TempText := 'BasinC started at ' + DateTimeToStr(Now) +#13#10;
-		F := TFileStream.Create(BASinDir+'\BASin.log', fmCreate or fmShareDenyNone);
+		F := TFileStream.Create(BASinDir+'\basinC.log', fmCreate or fmShareDenyNone);
      F.Seek(0, soFromEnd);
      F.Write(TempText[1], Length(TempText));
 	End Else Begin
-     F := TFileStream.Create(BASinDir+'\BASin.log', fmOpenWrite or fmShareDenyNone);
+     F := TFileStream.Create(BASinDir+'\basinC.log', fmOpenWrite or fmShareDenyNone);
   End;
 	F.Seek(0, soFromEnd);
 	F.Write(Text[1], Length(Text));
@@ -490,7 +491,7 @@ Begin
   // Load a AnsiString variable.
 
   If Filename = '' Then Begin
-     Filename := OpenFile(DisplayHandle, 'Load AnsiString Variable', [FTBsd], '', False, False);
+     Filename := OpenFile(DisplayHandle, 'Load String Variable', [FTBsd], '', False, False);
      If Filename = '' Then Begin
         DoError($1A, 'DATA Load cancelled');
         Exit;
@@ -659,6 +660,7 @@ Procedure LoadProgram;
 Var
   Extension, Directory: AnsiString;
   MemPtr: Word;
+
 Begin
 
   If Filename = '' Then Begin
@@ -772,13 +774,15 @@ Begin
 
      // Set the caption for a successful *LOAD*, not a MERGE
 
-     If Memory[T_ADDR] = 1 Then
+     If Memory[T_ADDR] = 1 Then Begin
         SetProjectName(Filename);
+     End;
         //SetProjectName(ExtractFilename(Filename));
 
      CheckFor128kCommands;
 
   End;
+
 
 End;
 
@@ -1760,7 +1764,7 @@ Begin
 
   End;
 
-  BASinOutput.AddToMRUList(Filename);
+  if (trim(Copy(ExtractFilename(Filename),1,8))<>'autoback') Then BASinOutput.AddToMRUList(Filename);
   GenerateBASICChecksum(BASICChecksum);
 
 End;

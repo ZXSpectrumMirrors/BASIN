@@ -117,8 +117,8 @@ Var
   INI:                    TStringList;
   DisplayScale:           Integer;
 
-  ReleaseName:            String = 'BasinC v1.7 Alpha';
-  ReleaseDate:            String = 'Feb 26,2017';
+  ReleaseName:            String = 'BasinC v1.74';  //Unreleased!
+  ReleaseDate:            String = 'Dec,17 2018';
   DefaultProjectName:     String = 'Untitled';
   CurProjectName:         String = 'Untitled';
   CurProjectFilename:     String = 'Untitled';
@@ -173,6 +173,7 @@ Var
   Opt_SeperateDisplay:    Boolean = True;               // Use a seperate Display window?
   Opt_FollowProgram:      Boolean = False;              // Track program execution in the editor? - a CPU hog though.
   Opt_CharacterRuler:     Boolean = True;               // A ruler device for measuring characters in PRINT statements
+  Opt_Controlicons:       Boolean = False;              // Breakpoint control icons
   Opt_ShowStatusBar:      Boolean = True;               // Display the status bar?
   Opt_ShowToolBar:        Boolean = True;               // Display the Toolbar?
   Opt_ShowAscii:          Boolean = True;               // Display non-alphanumeric/symbol chars (ie, colour changes) as special glyphs?
@@ -194,7 +195,7 @@ Var
   Opt_FunctionsItalic:    Boolean = False;
 
   Opt_HighlightComments:  Boolean = True;
-  Opt_CommentsColour:     Integer = 1;
+  Opt_CommentsColour:     Integer = 6;
   Opt_CommentsBold:       Boolean = False;
   Opt_CommentsItalic:     Boolean = True;
 
@@ -231,6 +232,7 @@ Var
   Opt_Foreground:         Integer = 0;
   Opt_Background:         Integer = 15;
 
+  Opt_AutoBackup:         Boolean = True;               //Automatically save backup files as BAS
   Opt_AutoLoadSession:    Boolean = False;              // Load the previous session on startup?
   Opt_LoadAutoStart:      Boolean = False;               // Allow BAS files to autostart on loading?
   Opt_AutoStart:          Boolean = False;               // Automatically save programs with Autostart?
@@ -239,6 +241,8 @@ Var
   Opt_Always128k:         Byte = 2;                     // Saves snaps as which hardware?
   Opt_SavePretty:         Boolean = False;              // Saves .bas files nicely by splitting up multistatement lines.
   Opt_TapeRewind:         Boolean = True;               // Automatically rewind TZX/TAP tapes when the reach the end.
+
+
 
   Opt_FastPrinting:       Boolean = True;               // Accelerate the ROM Printing routine?
   Opt_SavePrinting:       Boolean = True;               // Store the printed output between sessions?
@@ -346,6 +350,8 @@ Var
   EditorChars:            Array[1..952] of Byte;        // The font used by the editor.
 
   ProgramIs128k:          Boolean = False;              // Does this program contain any 128k commands?
+
+  Spectranet:             Boolean = False;              // Does this program uses spectranet-like % prefixed commands?
 
   ProjectSaved:           Boolean = False;              // Has the project been saved?
 
@@ -774,8 +780,8 @@ Var
 Begin
 
   INI := TStringlist.Create;
-  If FileExists(BASinDIR+'\BASin.ini') Then
-     INI.LoadFromFile(BASinDIR+'\BASin.ini');
+  If FileExists(BASinDIR+'\basinC.ini') Then
+     INI.LoadFromFile(BASinDIR+'\basinC.ini');
 
   // Resume
 
@@ -797,6 +803,7 @@ Begin
   Opt_GraphicsMethod :=      TGraphicsMethod(INIRead('Programming', 'Opt_GraphicsMethod', Ord(Opt_GraphicsMethod)));
   Opt_SeperateDisplay :=     INIRead('Programming', 'Opt_SeperateDisplay', Opt_SeperateDisplay);
   Opt_CharacterRuler :=      INIRead('Programming', 'Opt_CharacterRuler', Opt_CharacterRuler);
+  Opt_Controlicons :=        INIRead('Programming', 'Opt_Controlicons', Opt_Controlicons);
   Opt_ShowAscii :=           INIRead('Programming', 'Opt_ShowASCII', Opt_ShowAscii);
   Opt_Predictive :=          INIRead('Programming', 'Opt_Predictive', Opt_Predictive);
   Opt_OverwriteProtect :=    INIRead('Programming', 'Opt_OverwriteProtect', Opt_OverwriteProtect);
@@ -937,6 +944,7 @@ Begin
   Opt_LoadAutoStart :=          INIRead('BASFiles', 'Opt_LoadAutoStart', Opt_LoadAutoStart);
   Opt_Autostart :=          INIRead('BASFiles', 'Opt_Autostart', Opt_Autostart);
   Opt_SavePretty :=          INIRead('BASFiles', 'Opt_SavePretty', Opt_SavePretty);
+   Opt_AutoBackup :=         INIRead('BASFiles', 'Opt_AutoBackup', Opt_AutoBackup);
 
   // Tape Images
 
@@ -1024,6 +1032,7 @@ Begin
   INIWrite('Programming', 'Opt_AutoBracket', Ord(Opt_AutoBracket));
   INIWrite('Programming', 'Opt_SeperateDisplay', Opt_SeperateDisplay);
   INIWrite('Programming', 'Opt_CharacterRuler', Opt_CharacterRuler);
+  INIWrite('Programming', 'Opt_Controlicons', Opt_Controlicons);
   INIWrite('Programming', 'Opt_ShowASCII', Opt_ShowAscii);
   INIWrite('Programming', 'Opt_Predictive', Opt_Predictive);
   INIWrite('Programming', 'Opt_OverwriteProtect', Opt_OverwriteProtect);
@@ -1163,6 +1172,8 @@ Begin
   INIWrite('BASFiles', 'Opt_SavePretty', Opt_SavePretty);
   INIWrite('BASFiles', 'Opt_LoadAutoStart', Opt_LoadAutoStart);
   INIWrite('BASFiles', 'Opt_Autostart', Opt_Autostart);
+  INIWrite('BASFiles', 'Opt_AutoBackup', Opt_AutoBackup);
+
 
 
   // Tape Images
@@ -1204,7 +1215,7 @@ Begin
   End;
 
   Try
-     INI.SaveToFile(BASinDIR+'\BASin.ini');
+     INI.SaveToFile(BASinDIR+'\basinC.ini');
   Except
      On EFCreateError Do
         MessageBox(BASinOutput.Handle, PChar('Could not save BasinC'#39's settings.'#13'The file may be in use by another process,'#13'or you might not have sufficient permissions to perform this operation.'), PChar('Save error'), MB_OK or MB_ICONWARNING);

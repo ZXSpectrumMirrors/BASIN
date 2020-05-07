@@ -218,6 +218,9 @@ type
     ExportTap1: TMenuItem;
     BasinCNetworkDrive1: TMenuItem;
     SendtoExternalUtiility1: TMenuItem;
+    CodeControlIcons1: TMenuItem;
+    Timer3: TTimer;
+    LabelDebug: TLabel;
 
     procedure FormClose            (Sender: TObject; var Action: TCloseAction);
     procedure IdleProc             (Sender: TObject; var Done: Boolean);
@@ -281,6 +284,7 @@ type
     Procedure WordWrap             (Start, Len, Mode: Integer);
     Procedure ShowWindows;
     procedure simplecon1Click(Sender: TObject);
+    procedure Timer3Timer(Sender: TObject);
 
 
   private
@@ -299,6 +303,7 @@ type
     MouseDown:                     Boolean;
     NonActivePaint:                Boolean;
 
+    AutoBack,
     TokenisePoint,
     TokeniseLen,
     BracketLevel,
@@ -427,6 +432,7 @@ var
   LastWord: String;
   LatestWord: String;
   WordOffset: Integer;    //used for indenting
+  WordStack: String;      //used for indent stack
   EditorSelAnchor,
   EditorSelLength: Integer;
   ParseResult: String;
@@ -598,6 +604,7 @@ End;
 
 procedure TBASinOutput.FormShow(Sender: TObject);
 begin
+   DumpDoneQuit:=false;
 
   NeedDisplayUpdate := True;
   InitWorkerThread;
@@ -614,11 +621,11 @@ begin
      Exit;
   End;
 
-  If Not FileExists(BASinDir+'\BASin.bin') Then Begin
+  If Not FileExists(BASinDir+'\basinC.bin') Then Begin
      Timer1.Enabled := False;
      Timer2.Enabled := False;
      AppClosing := True;
-     Windows.MessageBox(BASinOutput.Handle, 'A file named '#39'BASin.bin'#39' could not be opened.'#13'BasinC cannot run without this file,'#13'and will now close.', PChar('Missing BASin File'), MB_OK or MB_ICONWARNING);
+     Windows.MessageBox(BASinOutput.Handle, 'A file named '#39'basinC.bin'#39' could not be opened.'#13'BasinC cannot run without this file,'#13'and will now close.', PChar('Missing BASin File'), MB_OK or MB_ICONWARNING);
      BASinOutput.Left := Screen.Width + 1000;
      PostMessage(BASinOutput.Handle, WM_QUIT, 0, 0);
      Abort := True;
@@ -724,7 +731,11 @@ begin
      DisplayWindow.Tag := 3;
 
      //arda commandline >1.69
-     if (ParamStr(1)<>'') then LoadQuoteQuote(ParamStr(1));
+
+     if (ParamStr(1)<>'') then Begin
+        LoadQuoteQuote(ParamStr(1));
+
+     End;
 
 
 
@@ -805,7 +816,7 @@ begin
 
   FastIMG1.Setbounds(ScrollBox1.Left +2, ScrollBox1.Top +2, ScrollBox1.ClientWidth, ScrollBox1.ClientHeight);
   If ScrollBox1.ClientHeight > ScrollBox1.VertScrollBar.Range Then ViewLine := 0;
-  Label1.SetBounds(SpeedButton12.Left + SpeedButton12.Width + 8, (CoolBar1.Height Div 2) - (Label1.Height Div 2), CoolBar1.ClientWidth - SpeedButton12.Left - SpeedButton12.Width - 16, Label1.Height);
+  Label1.SetBounds(Bevel3.Left + Bevel3.Width + 8, (CoolBar1.Height Div 2) - (Label1.Height Div 2), CoolBar1.ClientWidth - Bevel3.Left - Bevel3.Width - 16, Label1.Height);
   RepaintBASIC(True);
 
   UpdateParseText;
@@ -866,7 +877,7 @@ begin
            End;
         End;
      2:
-        Begin // LOAD ""
+        Begin // LOAD "" (Open...)
            If Not Registers.EmuRunning Then Begin
               TapeTrapLoad := False;
               LOADQuoteQuote('');
@@ -1236,10 +1247,16 @@ begin
         End;
      63:
         Begin // Save...
-           If Not ProjectSaved Then
-              SaveCurrentProgram('')
-           Else
-              SaveCurrentProgram(CurProjectFileName);
+
+            if (trim(Copy(ExtractFilename(CurProjectFileName),1,8))='autoback') Then Begin
+            SaveCurrentProgram('');
+            End Else Begin
+
+                If Not ProjectSaved Then
+                        SaveCurrentProgram('')
+                Else
+                        SaveCurrentProgram(CurProjectFileName);
+            End;
         End;
      64:
         Begin // 100% Window Size
@@ -1471,6 +1488,12 @@ begin
          End;
         End;
 
+        121:
+        Begin //show-hide icons
+        Opt_Controlicons := Not Opt_Controlicons;
+        SetRuler;
+
+        End;
   End;
 
 end;
@@ -1680,8 +1703,10 @@ End;
 
 Procedure TBASinOutput.OnHint(Sender: TObject);
 Var
-  Bytes, BytesUsed: Integer;
+  Atk, Acnt, Aen, Bytes, BytesUsed: Integer;
   Status: String;
+label
+loop10, loop20, loop60;
 Begin
   If (Screen.ActiveForm = Self) or (Sender = Timer2) Then
      If Application.Hint <> '' Then
@@ -1690,16 +1715,57 @@ Begin
         Bytes := GetWord(@Memory[RAMTOP])-GetWord(@Memory[STKEND]);
         BytesUsed := GetWord(@Memory[E_LINE])-GetWord(@Memory[PROG])-1;
 
+
+        // Following code is just an experiment by arda
+        Aen := GetWord(@Memory[PROG]);
+        Acnt:=0;
+
+loop10:
+          Aen := Aen+4;
+          Acnt:=Acnt+4;
+loop20:
+          if Aen>GetWord(@Memory[STKEND]) Then Begin
+            Acnt:=Acnt-4;
+            Goto loop60;
+          End;
+
+          Atk := GetByte(@Memory[Aen]);
+
+          if Atk=226 Then Begin
+                Acnt:=Acnt-4;
+                Goto loop60;
+          End;
+          if Atk=14 Then Begin
+              Aen:=Aen+6;
+              Goto loop20;
+          End;
+          if Atk=13 Then Begin
+              Aen:=Aen+1;
+              Acnt:=Acnt+1;
+              Goto loop10;
+          End;
+          Aen := Aen+1;
+          Acnt := Acnt+1;
+          Goto loop20;
+
+
+loop60:
+       //end of experiment
+
+
+
         If Bytes < 1024 Then
            Status := ' '+IntToStr(Abs(Bytes))+' Bytes available to BASIC ('
         Else
            Status := ' '+IntToStr(Bytes Div 1024)+' Kb available to BASIC (';
 
-        If BytesUsed < 1024 Then
-           Status := Status + IntToStr(Abs(BytesUsed)) + ' Bytes Used)'
-        Else
-           Status := Status + IntToStr(BytesUsed Div 1024) + ' Kb Used)';
+        //If BytesUsed < 1024 Then  //commented by arda
+           Status := Status + IntToStr(Abs(BytesUsed)) + ' Total Bytes Used';
+        //Else
+           //Status := Status + IntToStr(BytesUsed Div 1024) + ' Kb Used)';
 
+           Status := Status + ', '+ IntToStr(Abs(Acnt)) + ' Bytes in Listing';
+        Status := Status +')';
         StatusBar1.Panels[1].Text := Status;
      End;
   StatusBar1.Panels[0].Width := 25;
@@ -1734,10 +1800,19 @@ Begin
      VariablesWindow.BuildVarsList;
 End;
 
+
 procedure TBASinOutput.FormCreate(Sender: TObject);
 Var
   Idx: Integer;
 begin
+
+ //arda new menu manual redrawing directive begin
+
+   //Screen.MenuFont.Name := 'Arial Black';
+   //MainMenu1.OwnerDraw:=True;
+   //Screen.MenuFont.Size:=12;
+
+ //arda  end
 
   Abort := False;
 
@@ -1998,6 +2073,7 @@ Begin
   SpeedButton10.Enabled := AddBreakpoint1.Enabled;
   DisplayWindow1.Checked := DisplayWindow.Visible;
   CharacterRuler1.Checked := Opt_CharacterRuler;
+  CodeControlIcons1.Checked := Opt_Controlicons;
   EnableProfiling1.Checked := ProfilingEnabled;
 
 End;
@@ -2183,9 +2259,10 @@ Begin
 
   UpdateParseText;
   CodeError := False;
-  If Not BPs_Updating Then
+  If Not BPs_Updating Then Begin
      BreakpointsWindow.BuildBreakpointsList;
-
+     //LabelDebug.Caption :='*2' + LastLineBuffer  ;
+  End;
   BASinOutput.LastLineBuffer := BASinOutput.BASICMem;
 
 End;
@@ -2259,7 +2336,7 @@ Begin
   CurWordPos := 1;
 
   WordOffset:=0; //Flist
-
+  WordStack:='';
   If DoPaint Then Begin
      FastIMG1.Bmp.SetSize(((ScrollBox1.Width+(8*Opt_FontScale)) Div (8*Opt_FontScale))*(8*Opt_FontScale), ((ScrollBox1.Height+16) Div (8*Opt_FontScale))*(8*Opt_FontScale), 32);
      If Opt_FontScale = 1 Then Begin
@@ -2607,8 +2684,15 @@ Begin
                  End;
 
               if Opt_Indenting Then Begin
-                Dec(ViewX, WordOffset*((Opt_Indentsize*8)*Opt_FontScale)); //flist
-                WordOffset:=0;
+                 //this is a new line, so we can reset our indenting
+                 if (Copy(WordStack, Length(WordStack), 1)='I') Then
+                 Begin
+                     Wordstack:= Copy(WordStack, 1, Length(WordStack)-1);
+                     Dec(ViewX, ((Opt_Indentsize*8)*Opt_FontScale)); //flist
+                     Dec(WordOffset,1);
+
+                End;
+                 WordOffset:=0;
               End;
 
               XPos := ViewX;
@@ -2689,13 +2773,22 @@ Begin
                           If CurWord <> '' Then begin
                                 //new keyword, off screen
                                 If Opt_Indenting and (UpperCase(CurWord) = 'NEXT') and (WordOffset>0) Then begin //flist
-                                        Dec(WordOffset , 1); //flist
-                                        Dec(ViewX, (Opt_Indentsize*8)*Opt_FontScale); //flist
+                                        if (Copy(WordStack, Length(WordStack), 1)='F') Then
+                                        Begin
+                                                Wordstack:= Copy(WordStack, 1, Length(WordStack)-1);
+                                                Dec(WordOffset , 1); //flist
+                                                Dec(ViewX, (Opt_Indentsize*8)*Opt_FontScale); //flist
 
-                                        Dec(CurWordOrg, (Opt_Indentsize*8)*Opt_FontScale);
-                                        //XPos:=CurWordOrg+ViewX+32;
-                                        Dec(XPos,(Opt_Indentsize*8)*Opt_FontScale);
 
+
+                                                Dec(CurWordOrg, (Opt_Indentsize*8)*Opt_FontScale);
+                                                //XPos:=CurWordOrg+ViewX+32;
+                                                Dec(XPos,(Opt_Indentsize*8)*Opt_FontScale);
+                                        End Else Begin
+                                                //oops this program is not valid for indenting!
+                                                //if x Then Next y   <-- conditional next.
+                                                //let it sink.
+                                        End ;
                                 End;   //flist
 
                                 NewWord(DIB, CurWord, CurWordOrg, YPos, Ink, Paper, Bright, LineBreak, REMCommand, InString, DoPaint, CurWordPos);
@@ -2718,6 +2811,9 @@ Begin
                  End Else Begin
                         If Opt_Indenting and (CurWord <> '' ) Then Begin
                                  if  (UpperCase(CurWord) = 'NEXT') and (WordOffset>0) Then begin //flist
+                                        if (Copy(WordStack, Length(WordStack), 1)='F') Then
+                                        Begin
+                                         Wordstack:= Copy(WordStack, 1, Length(WordStack)-1);
                                         Dec(WordOffset , 1); //flist
                                         Dec(ViewX, (Opt_Indentsize*8)*Opt_FontScale); //flist
 
@@ -2725,6 +2821,7 @@ Begin
                                         //XPos:=CurWordOrg+ViewX+32;
                                         Dec(XPos,(Opt_Indentsize*8)*Opt_FontScale);
 
+                                        End;
                                 End;   //flist
                         End;
                  End;
@@ -2782,9 +2879,12 @@ Begin
                  If Not InString and Not REMCommand Then Begin
                     If CurPos > 3 Then
                        If (WordOffset>0) and (UpperCase(Copy(BASICMem, CurPos -3, 5)) = 'NEXT ') Then Begin
-                               Dec(WordOffset , 1); //flist lediz
-                               Dec(ViewX, (Opt_Indentsize*8)*Opt_FontScale); //flist
-
+                               if (Copy(WordStack, Length(WordStack), 1)='F') Then
+                                        Begin
+                                         Wordstack:= Copy(WordStack, 1, Length(WordStack)-1);
+                                         Dec(WordOffset , 1); //flist lediz
+                                         Dec(ViewX, (Opt_Indentsize*8)*Opt_FontScale); //flist
+                                        End;
                        End;
                  End;
               End;
@@ -2795,6 +2895,7 @@ Begin
                     If CurPos > 3 Then
                        If UpperCase(Copy(BASICMem, CurPos -2, 4)) = 'FOR ' Then Begin
                                 Inc(WordOffset , 1); //flist  lediz
+                                WordStack:=WordStack+'F';
                                 Inc(ViewX, (Opt_Indentsize*8)*Opt_FontScale); //flist
 
                        End;
@@ -2819,6 +2920,7 @@ Begin
 
                           if Opt_Indenting Then Begin
                                 Inc(WordOffset , 1); //flist
+                                WordStack:=WordStack+'I';
                                 Inc(ViewX, (Opt_Indentsize*8)*Opt_FontScale); //flist
                           End;
 
@@ -2866,11 +2968,11 @@ Begin
      End;
 
      ScrollBox1.VertScrollBar.Range := (1+Integer(NumLines)) * (8*Opt_FontScale);
-     ScrollBox1.VertScrollBar.Increment := 8;
+     ScrollBox1.VertScrollBar.Increment := 8*Opt_FontScale;
      ScrollBox1.VertScrollBar.Visible := True;
 
      ScrollBox1.HorzScrollBar.Range := (8+Integer(MaxLineLen)) * (8*Opt_FontScale);
-     ScrollBox1.HorzScrollBar.Increment := 8;
+     ScrollBox1.HorzScrollBar.Increment := 8*Opt_FontScale;
      ScrollBox1.HorzScrollBar.Visible := True;
 
      FillRect(FastIMG1.Bmp, 0, FastIMG1.Bmp.Height - FastIMG1.Height, FastIMG1.Width -1, (FastIMG1.Bmp.Height - FastIMG1.Height) + 7, TfBlack);
@@ -3762,7 +3864,7 @@ begin
               Exit;
            End;
            PageMove := True;
-           ScrollBox1.VertScrollBar.Position := ScrollBox1.VertScrollBar.Position - (FastIMG1.Height - (16*Opt_FontScale));
+           ScrollBox1.VertScrollBar.Position := ScrollBox1.VertScrollBar.Position - (FastIMG1.Height - (16*(8 * Opt_FontScale)));
            ViewLine := ScrollBox1.VertScrollBar.Position Div (8*Opt_FontScale);
            UpdateCursorPos(ViewOffset, Shifted);
            PageMove := False;
@@ -3781,8 +3883,8 @@ begin
               Exit;
            End;
            PageMove := True;
-           ScrollBox1.VertScrollBar.Position := ScrollBox1.VertScrollBar.Position + (FastIMG1.Height - (16*Opt_FontScale));
-           ViewLine := ScrollBox1.VertScrollBar.Position Div (8*Opt_FontScale);
+           ScrollBox1.VertScrollBar.Position := ScrollBox1.VertScrollBar.Position + (FastIMG1.Height - (16*(8* Opt_FontScale)));
+           ViewLine := ScrollBox1.VertScrollBar.Position Div (8*( Opt_FontScale));
            UpdateCursorPos(CursPageEnd, Shifted);
            PageMove := False;
            If Opt_EditorSounds and Not IsDirect Then MakeSound(sndType);
@@ -3819,6 +3921,7 @@ begin
                  LastLineBuffer := BASICMem;
                  CursOffset := EditorSelStart;
                  UpdateCursorPos(CursOffset, False);
+                 LabelDebug.Caption :='*1' + LastLineBuffer  ;
               End;
               If Opt_EditorSounds Then MakeSound(1);
            End;
@@ -4040,6 +4143,7 @@ end;
 Procedure TBASinOutput.MakeCursorVisible;
 Var
   OldPoint: TPoint;
+  debuge: Integer;
 Begin
    // OutputDebugString (PChar('EVAL-'+IntToStr(FastIMG1.Bmp.Height - GetSystemMetrics(SM_CYHSCROLL)- (40*Opt_FontScale))+'hi,'+ IntToStr( CursorPoint.Y )+'y'));
 
@@ -4056,9 +4160,12 @@ Begin
      ViewLine := Max(ViewLine - ((-CursorPoint.Y+(24*Opt_FontScale)) Div (8*Opt_FontScale)), 0);
   End Else If CursorPoint.Y  > (FastIMG1.Bmp.Height - GetSystemMetrics(SM_CYHSCROLL)) - (40*Opt_FontScale) Then   Begin
 
-     Inc(ViewLine, (CursorPoint.Y   - (FastIMG1.Bmp.Height - GetSystemMetrics(SM_CYHSCROLL) - (40*Opt_FontScale))) Div (8*Opt_FontScale));
+      debuge:=(CursorPoint.Y-(FastIMG1.Bmp.Height - GetSystemMetrics(SM_CYHSCROLL) - (40*Opt_FontScale))) Div (8*Opt_FontScale);
+
+     Inc(ViewLine, debuge);
 
      End;
+
   ScrollBox1.VertScrollBar.Position := ViewLine * (8*Opt_FontScale);
   ScrollBox1.HorzScrollBar.Position := ViewColumn * (8*Opt_FontScale);
   RepaintBASIC(True);
@@ -4224,6 +4331,8 @@ end;
 
 procedure TBASinOutput.Timer1Timer(Sender: TObject);
 begin
+  if (DumpDoneQuit) Then Close;
+
   CursorState := Not CursorState;
   If Screen.ActiveForm = Self Then Begin
      RepaintCursor;
@@ -4794,7 +4903,10 @@ Begin
                  While BASICMem[Idx2] <> #13 Do
                     Inc(Idx2);
                  BASICMem := Copy(BASICMem, 1, Idx -1)+Copy(BASICMem, Idx2 +1, 999999);
+
                  LastLineBuffer := BASICMem;
+
+
               End;
               OverWriteCursor := False;
            End Else Begin
@@ -4812,6 +4924,7 @@ Begin
                           Dec(CursOffset);
                     End Else Begin
                        LastLineBuffer := BASICMem;
+                       LabelDebug.Caption :='*3' + LastLineBuffer  ;
                        TempWord := GetWord(@Memory[LinePos+2])+4;
                        MoveSpectrumMemory(TempWord + LinePos, -TempWord);
                        OverWriteCursor := False;
@@ -4868,7 +4981,7 @@ Begin
            TempStr := TempStr + #13;
         BASICMem := Copy(BASICMem, 1, CursOffset -1)+TempStr+Copy(BASICMem, CursOffset, 999999);
         LastLineBuffer := BASICMem;
-
+          LabelDebug.Caption :='*4' + LastLineBuffer  ;
      End Else Begin
 
         BASICMem := Copy(BASICMem, 1, LineStart -1) + Copy(BASICMem, LineEnd +2, 999999);
@@ -5632,7 +5745,7 @@ Begin
   PutDWord(@BASICLen[1], Length(BASICMem));
 
   //Result := LastLineBuffer+#255+        //ardafix
-  Result:=          IntToStr(CursOffset)+#255+
+  Result:=   LastLineBuffer+#255+         IntToStr(CursOffset)+#255+
             IntToStr(ViewLine)+#255+
             IntToStr(ViewColumn)+#255+
             IntToStr(EditorSelAnchor)+#255+
@@ -5683,8 +5796,8 @@ Begin
 
   AddRedo;
 
-  //LastLineBuffer := Copy(Item, 1, Pos(#255, Item)-1);
-  //Item := Copy(Item, Pos(#255, Item)+1, 999999);                //ardafix
+  LastLineBuffer := Copy(Item, 1, Pos(#255, Item)-1);            //ardafixu
+  Item := Copy(Item, Pos(#255, Item)+1, 999999);                //ardafixu
   CursOffset := StrToInt(Copy(Item, 1, Pos(#255, Item)-1));
   Item := Copy(Item, Pos(#255, Item)+1, 999999);
   ViewLine := StrToInt(Copy(Item, 1, Pos(#255, Item)-1));
@@ -5771,6 +5884,21 @@ Begin
   RulerIMG.Visible := Opt_CharacterRuler;
   Bevel5.Visible := Opt_ShowStatusbar and (Opt_ShowingSyntax or Opt_CharacterRuler);
   CoolBar1.Visible := Opt_ShowToolbar;
+
+  SpeedButton10.Visible:= Opt_Controlicons;
+  SpeedButton8.Visible:= Opt_Controlicons;
+  SpeedButton7.Visible:= Opt_Controlicons;
+  SpeedButton9.Visible:= Opt_Controlicons;
+  //Bevel3.Visible:= Opt_Controlicons;
+  if (Not Opt_Controlicons) Then
+  Begin
+
+        Bevel3.Left:=SpeedButton12.Left+SpeedButton12.Width+4;
+  End Else Begin
+
+        Bevel3.Left:=SpeedButton9.Left+SpeedButton9.Width+4;;
+
+  End;
   SetSyntaxHelper;
   FormResize(nil);
 End;
@@ -6536,6 +6664,7 @@ Var
 begin
   Mnu := Sender as TMenuItem;
   width := aCanvas.TextWidth(mnu.caption) +32 +aCanvas.TextWidth(ShortCutToText(mnu.Shortcut));
+
 end;
 
 procedure TBASinOutput.Tokenise1Click(Sender: TObject);
@@ -6773,11 +6902,53 @@ begin
         CursorPoint.X:=CursorPoint.X*Opt_FontScale;    // Arda Workaround
 end;
 
+procedure TBASinOutput.Timer3Timer(Sender: TObject);
+begin
+  if (Opt_AutoBackup) and not Registers.EmuRunning Then Begin
+
+        if  (trim(Copy(CurProjectName,1,8))<>'autoback') Then  Begin
+          If ProjectSaved Then  Begin
+              SaveCurrentProgram(BASinDIR+'\autoback\autoback'+IntToStr(AutoBack)+'.bas');
+              AutoBack:=AutoBack+1;
+              If (AutoBack>9) Then AutoBack:=0;
+          End;
+        End;
+  End;
+end;
+
+
 end.
 
 // history & todo:
 
-// 1.7
+//1.74
+// Added: Save Display Window as BMP 
+
+//1.73
+// Undocumented fixes
+
+// 1.72
+// Added: -dumptxt commandline parameter. Extracts and saves BASIC portion of a basinc compatible program (eg. BAS/SNA/TAP).
+//                  Usage: basinc <filename> -dumptxt   
+//                  Example: basinc oregon.tap -dumptxt   (will create oregon.tap_BASIC.txt in same folder)
+
+// 1.71
+
+// Added: 4x,5x,6x font sizes for hi-dpi non-zoomed screens.
+
+// Fixed: variables with 90ish numbers like a91, b95 weren't properly tokenized.
+
+
+// 1.7      20.11.2017
+
+// Added new toolbar buttons
+// Added toggle breakpoint navigation buttons (see view menu)
+// Added auto backup feature. Basinc saves your work in the background every 3 minutes.
+//                            it keeps 10 copies going back up to 30 minutes in /autoback folder.
+//                            To turn this feature off, use: Options > Filing > Auto Backup
+// Changed - Due to large changes in ini and bin files, basinc now requires basinC.bin and basinC.ini, but it still uses basin.chm as help file.
+
+// 1.7a
 
 //  Changed - Broken Undo/Redo behaviour. BETA - Save often to avoid data loss.
 
@@ -6852,6 +7023,7 @@ end.
   // Languages
   // Kempston Mouse Support
   // Allow instances
+
 
 
 

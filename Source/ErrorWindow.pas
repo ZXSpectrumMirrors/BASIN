@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls;
+  StdCtrls, ExtCtrls, Languages;
 
 type
   TErrorForm = class(TForm)
@@ -50,8 +50,21 @@ Begin
   HW := THintWindow.Create(Self);
   If LastError > 42 Then LastError := 43;
   If LastErrorLine = 65534 Then LastErrorLine := 0;
-  Caption := ErrorAddresses[LastError].Desc+', '+IntToStr(LastErrorLine)+':'+IntToStr(LastErrorStatement);
-  CurHint := Errors[LastError][3]+#13#13+'Situation: '+Errors[LastError][4];
+  If Opt_Language='Türkçe' Then Begin
+       Caption := ErrorAddressesTR[LastError].Desc+', '+IntToStr(LastErrorLine)+':'+IntToStr(LastErrorStatement);
+       CurHint := ErrorsTR[LastError][3]+#13#13+'Situation: '+ErrorsTR[LastError][4];
+   end else if Opt_Language='English' Then Begin
+       Caption := ErrorAddresses[LastError].Desc+', '+IntToStr(LastErrorLine)+':'+IntToStr(LastErrorStatement);
+       CurHint := Errors[LastError][3]+#13#13+'Situation: '+Errors[LastError][4];
+   end else if Opt_Language='Deutsch' Then Begin
+       //Caption := ErrorAddressesDE[LastError].Desc+', '+IntToStr(LastErrorLine)+':'+IntToStr(LastErrorStatement);
+       //CurHint := ErrorsDE[LastError][3]+#13#13+'Situation: '+ErrorsDE[LastError][4];
+   end else Begin
+       Caption := ErrorAddresses[LastError].Desc+', '+IntToStr(LastErrorLine)+':'+IntToStr(LastErrorStatement);
+       CurHint := Errors[LastError][3]+#13#13+'Situation: '+Errors[LastError][4];
+
+   End;
+
   Label1.Caption := CurHint;
   DispRect := HW.CalcHintRect(Label1.Width, Label1.Caption, nil);
   HW.Free;

@@ -7,12 +7,109 @@ interface
 
   Procedure SetLanguage(Var lang: String);
 
+ var
+
+
+  ErrorsTR: Array[0..43, 1..4] of AnsiString =
+  (('0', 'Baþarýlý', 'Program baþarýyla tamamlandý ya da var olan en büyük sayýlý satýrdan daha büyük bir satýra zýplandý.', 'Herhangi'),
+   ('1', 'FOR'#39'u olmayan NEXT', 'Kontrol deðiþkeni mevcut deðil (FOR ile kurulumu yapýlmamýþ), fakat ayný isimli bir deðiþken mevcut.', 'NEXT'),
+   ('2', 'Deðiþken bulunamadý', 'Bu hata basit deðiþken için sözkonusu olduðunda, deðiþkenin FOR, LET, READ ya da INPUT komutlarý tarafýndan oluþturulmadan ya da diskten okunmadan önce kullanýlmaya baþlanmýþ olduðunu gösterir.'+' Dizi deðiþkenleri için ise deðiþken diskten okunmadan ya da DIM komutu ile kurulumu yapýlmadan kullanýldýðýný gösterir.', 'Any'),
+   ('3', 'Alt öge bulunamadý', 'Aranan öge sýralý deðiþken boyutlarýnýn dýþýnda ya da alt öge sayýsý yanlýþ. Eðer alt öge negatif ise ya da 65535'#39'den büyük ise B hatasý verilir.', 'Alt Öge Deðiþkenleri, harf dizinleri'),
+   ('4', 'Yetersiz bellek', 'Yapmak istenilen iþlem için yeterli bellek kalmadý. Eðer yorumlayýcý bu durumda takýlýp kaldýysa, CLEAR komutunu kullanarak bellekte tutulan deðiþkenlerin temizlenmesi gerekmektedir.', 'LET, INPUT, FOR, DIM, GO SUB, LOAD, MERGE. Bazý durumlarda hesaplama anýnda.'),
+   ('5', 'Ekran alaný dýþýnda', 'Bir INPUT komutu 23 satýrdan fazla metin oluþturmaya çalýþtý. Ayrýca PRINT AT 22,xx kullanýldýðýnda da oluþur.', 'INPUT, PRINT AT'),
+   ('6', 'Sayý çok büyük ', 'Hesaplamalar sonucunda 10 üzeri 38'#39'den daha büyük bir rakam oluþtu.', 'Tüm aritmatik hesaplar'),
+   ('7', 'GO SUB'#39'u olmayan RETURN', 'Çalýþtýrýlan GO SUB sayýsýndan bir fazla RETURN iþletildi.', 'RETURN'),
+   ('8', 'Bilinmeyen hata', 'Yorumlayýcý iþleyemeyeceði bir komut ya da ifade ile karþýlaþtý. Bu durumda program akýþý durur.', 'Herhangi bir ifade ya da komut.'),
+   ('9', 'STOP komutu', 'CONTINUE komutu STOP'#39'u tekrarlamayacak ve bir sonraki ifadeden devam edecektir.', 'STOP'),
+   ('A', 'Geçersiz argüman', 'Fonksiyon için verilen argüman uygun deðil.', 'SQR, LN, ASC, ACS, USR (dizi deðiþkeni ile)'),
+   ('B', 'Tam sayý kapsam dýþýnda', 'Bir tam sayý gerektiðinde, küsüratlý bir argüman en yakýn tam sayýya yuvarlanýr. Eðer bu beklenen aralýðýn dýþýnda ise bu hata ortaya çýkar. Sýra deðiþken eriþimi için bkz: HATA 3.', 'RUN, RANDOMIZE, POKE, DIM, GO TO, GO SUB, LIST, LLIST, PAUSE, PLOT, CHR$, PEEK, USR (nümerik argüman ile)'),
+   ('C', 'BASIC'#39'de anlamý yok', 'Yazýlan metin anlamlý bir ifade oluþturmuyor. Ayný zamanda bir fonksiyon için kullanýlan çok yanlýþ bir argüman hakkýnda da bu hata üretilebilir.', 'VAL, VAL$'),
+   ('D', 'BREAK - CONTINUE son komutu tekrarlar', 'Bir çevresel iþlem sýrasýnda BREAK tuþuna basýldý. Bu raporun ardýndan kullanýlan CONTINUE komutu ifadeyi tekrarlayacaktýr. L raporu ile karþýlaþtýrýn.', 'LOAD, SAVE, VERIFY, MERGE. Ayný zamanda ekrandaki "Scroll?" sorusuna N, BREAK ya da boþluk tuþuna basarak cevap verdiðinizde.'),
+   ('E', 'DATA bitti', 'DATA listesininde bulunan veriler tükenmesine karþýn program READ ile okumaya devam etmeyi denedi.', 'READ'),
+   ('F', 'Geçersiz dosya adý', 'SAVE ile kullandýðýnýz dosya adý dosya sisteminizde bir anlam ifade etmiyor.', 'SAVE'),
+   ('G', 'Satýr için yer yok', 'Program hafýzasýnda yeni bir satýrý kaydedecek kadar yer kalmadý.', 'Programa yeni bir satýr girerken.'),
+   ('H', 'INPUTda STOP kullanýldý', 'INPUT sýrasýnda girilen veri STOP komutu ile baþlýyor. Hata raporu 9'#39'un aksine, CONTINUE normal davranýr ve INPUT ifadesini tekrar eder.', 'INPUT'),
+   ('I', 'NEXT olmadan FOR', 'Hiç tekrar edilmeyecek bir FOR döngüsü ayarlandý (örn. FOR n=1 TO 0) ve zýplanmasý gereken NEXT komutu bulunamadý.', 'FOR'),
+   ('J', 'Geçersiz G/Ç aygýtý', 'Metin giriþ (INPUT) çýkýþý (OUT) desteklemeyen bir aygýta karakter yazmaya ya da okumaya çalýþtýnýz.'+' Örneðin, ekran akýþýndan karakter okumak mümkün deðildir ya da sadece okunabilir bir dosyaya yeni karakterler ekleyemezsiniz. Bu durumda INPUT #2,A$ benzeri bir ifade bu hataya sebep olur.' , 'Akýþ operasyonlarý; OPEN #, CLOSE #, INPUT #, PRINT # vb.'),
+   ('K', 'Geçersiz Renk', 'Verilen rakam renk için geçersiz. INK, PAPER ve BORDER komutlarý 0 ile 7 arasýndaki, BRIGHT, FLASH, INVERSE ve OVER sadece 0, 1, ve 8 rakamlarýný destekler.', 'INK, PAPER, BORDER, FLASH, BRIGHT, INVERSE, OVER; ayrýca ayný iþi yapan kontrol karakterlerinden sonra.'),
+   ('L', 'Program BREAK ile kesildi', 'BREAK tuþuna basýldý. Kesme isteði iki ifade arasýnda oluþtu. Satýr ve '+'ifade numarasý BREAK tuþuna basýlmadan önceki ifadeye aittir, fakat CONTINUE sonraki ifadeden devam edecektir (zýplamalarýn gerçekleþmesine izin verecek þekilde), yani ifadeler tekrar edilmez.', 'Herhangi'),
+   ('M', 'RAMTOP iþe yaramýyor', 'RAMTOP için verilmiþ olan adres sayýsý çok büyük ya da çok küçük.', 'CLEAR, bazen RUN'),
+   ('N', 'Ýfade kayýp', 'Artýk geçerli olmayan bir ifadeye zýplandý.', 'RETURN, NEXT, CONTINUE'),
+   ('O', 'Geçersiz akýþ', 'Geçerli akýþ kanallarý olan 0 ile 15 dýþýnda bir kanala ya da açýk olmayan bir kanala yazýlmaya çalýþýldý, ya da aralýk dýþýnda bir kanal açýlmaya çalýþýldý.', 'INPUT #, OPEN #, PRINT #'),
+   ('P', 'DEF FN olmadan FN', 'Kullanýcý tarafýndan tanýmlanmýþ bir fonksiyon (FN) önceden tanýmlanmadan (DEF FN) programda kullanýldý.', 'FN'),
+   ('Q', 'Parametre hatasý', 'Yanlýþ sayýda argüman ya da argümanlardan birisinin tipi yanlýþ (rakam yerine harf dizisi ya da tersi).', 'Herhangi bir fonksiyon.'),
+   ('R', 'Dosya yükleme hatasý', 'Bir dosya disk ya da kasette bulundu fakat yüklenme sýrasýnda bir hata oluþtu ya da kontrol hatasý verdi.', 'VERIFY, LOAD, MERGE'),
+   ('a', 'MERGE hatasý', 'MERGE ! bir sebepten doðru çalýþamadý. Dosya tipi ya da boyutu hatalý.', 'MERGE !'),
+   ('b', 'Dosya tipi yanlýþ', 'Ram disk iþlemi sýrasýnda yanlýþ dosya tipi verilmiþ. Örneðin LOAD !"name" komutu için CODE dosyasý bulunmasý.', 'MERGE !, LOAD !'),
+   ('c', 'CODE hatasý', 'Dosya boyutu bellek sýnýrlarýný aþtý.', 'LOAD! file CODE'),
+   ('d', 'Çok fazla parantez', 'Argümanlarýn birinin etrafýnda çok fazla parantez mevcut.', 'PLAY'),
+   ('e', 'Dosya zaten mevcut', 'Verilen dosya ismi zaten bulunuyor.', 'SAVE !'),
+   ('f', 'Geçersiz isim', 'Dosya ismi yanlýþ ya da 10 karakterden fazla.', 'SAVE !, ERASE !'),
+   ('g', 'RAMDisk hatasý', 'Bu hata asla gösterilmeyecektir, RAM hatasýný gösterir.', 'LOAD !, SAVE !, CAT !, ERASE !'),
+   ('h', 'Dosya bulunamadý', 'RamDiskte verilen dosya ismi bulunmuyor.', 'LOAD !, MERGE !, ERASE !'),
+   ('i', 'Geçersiz aygýt', 'FORMAT komutundan sonra verilmiþ aygýt adý mevcut deðil ya da bir fiziksel aygýta ait deðil.', 'FORMAT'),
+   ('j', 'Geçersiz Baud', 'RS232 aygýtý için baud hýzý sýfýr olarak ayarlanmýþ.', 'FORMAT LINE'),
+   ('k', 'Geçersiz nota adý', 'PLAY komutu tanýmadýðý bir harf ile ya da küçük harfli bir karakterle karþýlaþtý.', 'PLAY'),
+   ('l', 'Sayý çok büyük', 'Komut için kullanýlan parametrede verilen rakam çok büyük.', 'PLAY'),
+   ('m', 'Nota aralýk dýþýnda', 'Bir dizi diyez ya da bemol notayý ses çipinin dýþýna taþýdý.', 'PLAY'),
+   ('n', 'Aralýk dýþýnda', 'Bir parametre çok büyük ya da küçük. Eðer hata çok büyükse hata l ortaya çýkar.', 'PLAY'),
+   ('o', 'Çok fazla baðlý nota', 'Çok fazla nota birbirine baðlanmaya çalýþtý.', 'PLAY'),
+   ('?', 'Bilinmeyen hata', 'Bir ifade adres 8'#39'deki rom rutinine zýplamaya sebep oldu fakat ERR NR sistem deðiþkeninde geçersiz bir rakam mevcuttu.', 'Genellikle BASIC'#39' USR 8 komutu iþletildiðinde oluþur'));
+
+  ErrorAddressesTR: Array[0..43] Of TSpectrumError =
+     ((Address:$1392; Desc:'0 BAÞARILI'; Notify:True),
+      (Address:$1394; Desc:'1 FOR'#39'u olmayan NEXT'; Notify:True),
+      (Address:$13A4; Desc:'2 Deðiþken bulunamadý'; Notify:True),
+      (Address:$13B6; Desc:'3 Alt öge bulunamadý'; Notify:True),
+      (Address:$13C5; Desc:'4 Yetersiz bellek'; Notify:True),
+      (Address:$13D2; Desc:'5 Ekran alaný dýþýnda'; Notify:True),
+      (Address:$13DF; Desc:'6 Sayý çok büyük'; Notify:True),
+      (Address:$13ED; Desc:'7 GO SUB'#39'u olmayan RETURN'; Notify:True),
+      (Address:$1401; Desc:'8 Dosya sonu'; Notify:True),
+      (Address:$140C; Desc:'9 STOP komutu'; Notify:True),
+      (Address:$141A; Desc:'A Geçersiz argüman'; Notify:True),
+      (Address:$142A; Desc:'B Tamsayý kapsam dýþýnda'; Notify:True),
+      (Address:$143E; Desc:'C BASIC'#39'de anlamý yok'; Notify:True),
+      (Address:$144F; Desc:'D BREAK - CONT son komutu tekrarlar'; Notify:True),
+      (Address:$1463; Desc:'E DATA bitti'; Notify:True),
+      (Address:$146E; Desc:'F Geçersiz dosya adý'; Notify:True),
+      (Address:$147F; Desc:'G Satýr için yer yok'; Notify:True),
+      (Address:$148F; Desc:'H INPUTda STOP kullanýldý'; Notify:True),
+      (Address:$149C; Desc:'I NEXT olmadan FOR'; Notify:True),
+      (Address:$14AC; Desc:'J Geçersiz G/Ç aygýtý'; Notify:True),
+      (Address:$14BE; Desc:'K Geçersiz Renk'; Notify:True),
+      (Address:$14CC; Desc:'L Program BREAK ile kesildi'; Notify:True),
+      (Address:$14DE; Desc:'M RAMTOP iþe yaramýyor'; Notify:True),
+      (Address:$14EC; Desc:'N Ýfade kayýp'; Notify:True),
+      (Address:$14FA; Desc:'O Geçersiz akýþ'; Notify:True),
+      (Address:$1508; Desc:'P DEF FN olmadan FN'; Notify:True),
+      (Address:$1516; Desc:'Q Parametre hatasý'; Notify:True),
+      (Address:$1525; Desc:'R Dosya yükleme hatasý'; Notify:True),
+      (Address:$1392; Desc:'a MERGE hatasý'; Notify:True),
+      (Address:$1392; Desc:'b Yanlýþ dosya tipi'; Notify:True),
+      (Address:$1392; Desc:'c CODE hatasý'; Notify:True),
+      (Address:$1392; Desc:'d Çok fazla parantez'; Notify:True),
+      (Address:$1392; Desc:'e Dosya zaten mevcut'; Notify:True),
+      (Address:$1392; Desc:'f Geçersiz isim'; Notify:True),
+      (Address:$1392; Desc:'g RAMDisk hatasý'; Notify:True),
+      (Address:$1392; Desc:'h Dosya bulunamadý'; Notify:True),
+      (Address:$1392; Desc:'i Geçersiz aygýt'; Notify:True),
+      (Address:$1392; Desc:'j Geçersiz baud'; Notify:True),
+      (Address:$1392; Desc:'k Geçersiz nota adý'; Notify:True),
+      (Address:$1392; Desc:'l Sayý çok büyük'; Notify:True),
+      (Address:$1392; Desc:'m Nota aralýk dýþýnda'; Notify:True),
+      (Address:$1392; Desc:'n Aralýk dýþýnda'; Notify:True),
+      (Address:$1392; Desc:'o Çok fazla baðlý nota'; Notify:True),
+      (Address:$1392; Desc:'? Bilinmeyen hata'; Notify:True));
+
 
 implementation
 
 Uses BASINMain;
 
 Procedure SetLanguage(Var lang: String);
+
+
 
 begin
 
@@ -31,7 +128,7 @@ if (lang='Türkçe') then
         
           // urceR14.20110529\BasinMain.dfm
         BASinOutput.Caption :=ReleaseName;
-        BASinOutput.Label1.Caption :='Label1';
+        //BASinOutput.Label1.Caption :='';
         BASinOutput.File1.Caption :='&Dosya';
         BASinOutput.New1.Caption :='Yeni';
         BASinOutput.N5.Caption :='-';
@@ -187,13 +284,17 @@ if (lang='Türkçe') then
         BASinOutput.RunToCursor1.Caption :='Satýra kadar çalýþtýr';
         BASinOutput.GoToCursor1.Caption :='Satýra git';
         BASinOutput.WatchVariable1.Caption :='Deðiþkeni izle';
+
+
+        //Errors:=ErrorsTR;
+        //ErrorAddresses:=ErrorAddressesTR;
         end;
 
 if (lang='English') then
         Begin
                   // urceR14.20110529\BasinMain.dfm
         BASinOutput.Caption :=ReleaseName;
-        BASinOutput.Label1.Caption :='Label1';
+        //BASinOutput.Label1.Caption :='Label1';
         BASinOutput.File1.Caption :='&File';
         BASinOutput.New1.Caption :='New';
         BASinOutput.N5.Caption :='-';
@@ -355,7 +456,7 @@ if (lang='Deutsch') then
         Begin
                   // urceR14.20110529\BasinMain.dfm
         BASinOutput.Caption :='BASin';
-        BASinOutput.Label1.Caption :='Label1';
+        //BASinOutput.Label1.Caption :='Label1';
         BASinOutput.File1.Caption :='&Datei';
         BASinOutput.New1.Caption :='&Neu';
         BASinOutput.N5.Caption :='-';
@@ -518,7 +619,7 @@ if (lang='Spanish') then
         Begin
                   // urceR14.20110529\BasinMain.dfm
         BASinOutput.Caption :=ReleaseName;
-        BASinOutput.Label1.Caption :='Label1';
+        //BASinOutput.Label1.Caption :='Label1';
         BASinOutput.File1.Caption :='&Archivo';
         BASinOutput.New1.Caption :='Nuevo';
         BASinOutput.N5.Caption :='-';

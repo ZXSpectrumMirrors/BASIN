@@ -152,6 +152,9 @@ type
     ThemeBevel4: TThemeBevel;
     Edit2: TEdit;
     SpeedButton2: TSpeedButton;
+    ThemeBevel5: TThemeBevel;
+    Label45: TLabel;
+    CheckBox32: TCheckBox;
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure Button2Click(Sender: TObject);
@@ -317,6 +320,9 @@ begin
   CheckBox17.Checked := TapeTrapLOAD;
   CheckBox18.Checked := TapeTrapSAVE;
   CheckBox19.Checked := Opt_TapeRewind;
+
+  //AutoBackup
+  CheckBox32.Checked := Opt_AutoBackup;
 
   // Languages
 
@@ -509,7 +515,7 @@ begin
   TapeTrapLOAD := CheckBox17.Checked;
   TapeTrapSAVE := CheckBox18.Checked;
   Opt_TapeRewind := CheckBox19.Checked;
-
+  Opt_AutoBackup := CheckBox32.Checked;
   // Sound Settings
 
   Case ComboBox5.ItemIndex of

@@ -9,16 +9,18 @@ uses
 type
   TBasinetWindow = class(TForm)
     Memo1: TMemo;
-    Label1: TLabel;
-    Label2: TLabel;
-    BasinetUser: TEdit;
-    BasinetPwd: TEdit;
     ListBox1: TListBox;
     Close: TButton;
     Load: TButton;
     Save: TButton;
     Share: TButton;
     Delete: TButton;
+    GroupBox1: TGroupBox;
+    Label1: TLabel;
+    Label2: TLabel;
+    BasinetUser: TEdit;
+    BasinetPwd: TEdit;
+    Button1: TButton;
     procedure FormCreate(Sender: TObject);
   private
     { Private declarations }

@@ -38,6 +38,7 @@ type
     DisplayHelp1: TMenuItem;
     Emulation1: TMenuItem;
     FullSpeed1: TMenuItem;
+    SaveImage1: TMenuItem;
 
     procedure FormShow(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -71,6 +72,8 @@ type
     Procedure SizeForm(Scale: Integer);
     Procedure SizeDIBS;
     Procedure InitScaleDIBs;
+      Procedure SaveImage;
+
   end;
 
 var
@@ -120,7 +123,7 @@ implementation
 
 {$R *.DFM}
 
-Uses BASinMain, InputUtils, Utility, FastCore, ROMUtils, Sound, Printing;
+Uses BASinMain, InputUtils, Filing, Utility, FastCore, ROMUtils, Sound, Printing;
 
 procedure TDisplayWindow.FormShow(Sender: TObject);
 begin
@@ -772,6 +775,7 @@ begin
         Begin // 200% Window Size
            DisplayWindow.Show;
            DisplayWindow.SizeForm(200);
+
         End;
      3:
         Begin // Force Aspect Ratio
@@ -804,13 +808,111 @@ begin
            DisplayWindow.Show;
            DisplayWindow.SizeForm(400);
         End;
+     12:
+        Begin //Save Image
+               SaveImage;
+        End;
      10:
         Begin // Delete
            DisplayWindow.Show;
            DisplayWindow.SizeForm(600);
         End;
+
   End;
 end;
+
+procedure TDisplayWindow.SaveImage;
+Var
+   Result: TFastDIB;
+   Filename: String;
+
+  {Attr, Ink, Paper, Bright: Byte;
+  TempPixels: Array[0..255, 0..191] of Byte;
+  TempAttrs: Array[0..31, 0..23] of Byte;
+  Ext, NewFilename: String;
+  StartAddr, DataLen: Word;
+  ScreenArray: Array of Byte;
+  Idx, X, Y, Cx, Cy, Offset: Integer;
+  BitVal, ByteVal: Byte;
+  Result, Bmpa: TFastDIB;
+  Flashing: Boolean;
+  Bit: Byte; }
+Begin
+
+
+  Result := TFastDIB.Create;
+
+     Result.SetSize(DisplayWindow.DisplayIMG.Bmp.Width, DisplayWindow.DisplayIMG.Bmp.AbsHeight, 32);
+     DisplayWindow.DisplayIMG.Bmp.Draw(Result.hDc, 0, 0);
+
+    // get a filename.
+              Filename := OpenFile(Handle, 'Save Display as Bitmap Image', [FTBmp], '', True, False);
+              If Filename = '' Then Exit;
+
+    Result.SaveToFile(Filename);
+    Result.Free;
+
+  {
+
+  For Idx := 1 To 6144 Do Begin
+
+     X := ((Idx -1) and 31) * 8;
+     Y := ScreenOffsets[Idx -1];
+
+     ByteVal := Ord(Memory[16383+Idx]);
+     BitVal := 128;
+
+     For Bit := 0 To 7 Do Begin
+        If ByteVal And BitVal <> 0 Then
+           TempPixels[X, Y] := 1
+        Else
+           TempPixels[X, Y] := 0;
+        BitVal := BitVal Shr 1;
+        Inc(X);
+     End;
+
+  End;
+
+  // And the ATTRs.
+
+  For Idx := 6145 To 6912 Do Begin
+     X := Idx - 6145;
+     Y := X Div 32;
+     X := X And 31;
+     TempAttrs[X, Y] := Ord(Memory[16383+Idx]);
+  End;
+
+
+
+   Bmpa := TFastDIB.Create;
+     Bmpa.SetSize(256, 192, 8);
+     For Idx := 0 to 15 do Bmpa.Colors[Idx] := DisplayPalette[Idx];
+     Bmpa.UpdateColors;
+
+
+
+
+    For Y := 0 To 191 Do Begin
+        For X := 0 To 255 Do Begin
+           If X Mod 8 = 0 Then Begin
+              Attr := TempAttrs[X Div 8, Y Div 8];
+              Bright := (Attr And 64) Shr 3;
+              Ink := (Attr And 7) + Bright;
+              Paper := ((Attr Shr 3) And 7) + Bright;
+              If Attr and 128 <> 0 Then Flashing := True;
+           End;
+
+              If TempPixels[X, Y] = 1 Then
+                 Bmpa.Pixels8[191 - Y, X] := Ink
+              Else
+                 Bmpa.Pixels8[191 - Y, X] := Paper;
+        End;
+     End;
+            Bmpa.SaveToFile('c:\test.bmp');
+        Bmpa.Free;
+}
+
+End;
 
 procedure TDisplayWindow.OnEnterMenuLoop(var Message: TMessage);
 Begin
@@ -914,7 +1016,7 @@ Begin
      end;
 End;
 
-procedure _2xSaI; 
+procedure _2xSaI;
 var
   srcP, deltaP, dstP: Pointer;
   i: Integer;
